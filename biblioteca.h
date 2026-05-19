@@ -22,27 +22,32 @@ typedef struct {
     char dataD[20]; // data devolução
 } Emprestimo;
 
-// estruturas de nó
-// catálogo, histórico, fila, pilha)
+// Estruturas de nó (catálogo, histórico, fila, pilha)
 typedef struct NoLista {
     Livro livro; 
     struct NoLista *prox;
 } NoLista;
 
-// nó pra busca rapida (arvore binaria)
+// Nó para busca rápida (árvore binária)
 typedef struct NoArvore {
     Livro livro;
     struct NoArvore *esq;
     struct NoArvore *dir;
 } NoArvore;
 
-// Assinatura da função
-Livro* criarLivro();
+void limparBuffer();
+int ehApenasNumero(const char *str);
+int pedirIdValidado(const char *mensagem);
+
+int verificarIdExiste(int id, const char *nomeArquivo);
+Livro* criarLivro(int id);
 void salvarLivro(Livro *livro, const char *nomeArquivo);
 void carregarLivros(const char *nomeArquivo);
-int verificarId(int id, const char *nomeArquivo);
-int idInt(const char *str);
-void limparBuffer();
+
+int buscarLivroPorId(int id, const char *nomeArquivo);
+void editarLivro(int id, const char *nomeArquivo);
 void excluirLivro(int id, const char *nomeArquivo);
+void paraMinusculo(char *str);
+int buscarLivroPorTermo(const char *termo, int categoria, const char *nomeArquivo);
 
 #endif

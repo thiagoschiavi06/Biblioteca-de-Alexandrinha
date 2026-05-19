@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <ctype.h>
+#include<ctype.h>
 #include "biblioteca.h"
 
 int main() {
@@ -14,52 +14,31 @@ int main() {
         printf("=====================================\n");
         printf("1. Cadastrar Novo Livro\n");
         printf("2. Listar Todos os Livros\n");
-        printf("3. Excluir um Livro\n");
+        printf("3. Buscar Livro\n");
+        printf("4. Editar Livro Existente\n");
+        printf("5. Excluir um Livro\n");
         printf("0. Sair do Programa\n");
         printf("=====================================\n");
         printf("Escolha uma opcao: ");
-        scanf("%d", &opcao);
+        
+        if (scanf("%d", &opcao) != 1) {
+            limparBuffer();
+            opcao = -1; 
+        }
 
         switch (opcao) {
             case 1: {
-                char entradaId[50];
-                int idDigitado = -1;
-                
-                limparBuffer(); 
-                
+                limparBuffer();
                 printf("\n--- CADASTRO DE LIVRO ---\n");
+                int idDigitado = pedirIdValidado("ID do novo livro: ");
                 
-                do {
-                    printf("ID do novo livro (apenas numeros positivos): ");
-                    fgets(entradaId, sizeof(entradaId), stdin);
-                    entradaId[strcspn(entradaId, "\n")] = '\0';
-                    
-                    if (strlen(entradaId) == 0) {
-                        printf("[ERRO] O ID nao pode ser vazio!\n");
-                        idDigitado = -1; // Mantém o loop
-                    } 
-                    else if (!idInt(entradaId)) {
-                        printf("[ERRO] ID invalido! Nao use letras, espacos ou simbolos.\n");
-                        idDigitado = -1;
-                    } 
-                    else {
-                        idDigitado = atoi(entradaId);
-                        if (idDigitado <= 0) {
-                            printf("[ERRO] O ID nao pode ser negativo ou zero!\n");
-                            idDigitado = -1;
-                        }
-                    }
-                } while (idDigitado <= 0);
-                
-                // Verifica imediatamente se o ID já existe no arquivo binário
-                if (verificarId(idDigitado, nomeDoArquivo)) {
-                    printf("\n[ERRO] O ID %d ja existe no sistema! Cadastro cancelado.\n", idDigitado);
+                if (verificarIdExiste(idDigitado, nomeDoArquivo)) {
+                    printf("\n[ERRO] O ID %d ja existe! Cadastro cancelado.\n", idDigitado);
                 } else {
                     Livro *meuLivro = criarLivro(idDigitado); 
-                    
                     if (meuLivro != NULL) {
                         salvarLivro(meuLivro, nomeDoArquivo);
-                        free(meuLivro);
+                        free(meuLivro); 
                     }
                 }
                 break;
@@ -67,47 +46,133 @@ int main() {
             case 2:
                 carregarLivros(nomeDoArquivo);
                 break;
-
-            case 3: {
-                char entradaId[50];
-                int idParaApagar = -1;
                 
+            case 3: {
+                limparBuffer();
+                printf("\n--- BUSCAR LIVRO ---\n");
+                printf("1. Buscar por ID\n");
+                printf("2. Buscar por Titulo\n");
+                printf("3. Buscar por Autor\n");
+                printf("4. Buscar por Genero\n");
+                printf("Escolha o tipo de busca: ");
+
+                int tipoBusca;
+                if (scanf("%d", &tipoBusca) != 1) {
+                    limparBuffer();
+                    tipoBusca = -1;
+                }
+
+                if (tipoBusca == 1) {
+                    limparBuffer();
+                    int idBusca = pedirIdValidado("Digite o ID para busca: ");
+                    if (!buscarLivroPorId(idBusca, nomeDoArquivo)) {
+                        printf("\n[ERRO] Livro com ID %d nao encontrado.\n", idBusca);
+                    }
+                } else if (tipoBusca >= 2 && tipoBusca <= 4) {
+                    limparBuffer();
+                    char termo[100];
+                    printf("Digite o termo da busca: ");
+                    fgets(termo, sizeof(termo), stdin);
+                    termo[strcspn(termo, "\n")] = '\0';
+
+                    if (strlen(termo) > 0) {
+
+                        buscarLivroPorTermo(termo, tipoBusca - 1, nomeDoArquivo); 
+                    } else {
+                        printf("\n[ERRO] O termo de busca nao pode ser vazio.\n");
+                    }
+                } else {
+                    printf("\n[ERRO] Opcao de busca invalida!\n");
+                }
+                break;
+            }
+            
+            case 4: {
+                limparBuffer();
+                printf("\n--- EDITAR LIVRO ---\n");
+                int idEditar = pedirIdValidado("Digite o ID do livro a ser editado: ");
+                if (verificarIdExiste(idEditar, nomeDoArquivo)) {
+                    editarLivro(idEditar, nomeDoArquivo);
+                } else {
+                    printf("\n[ERRO] Livro com ID %d nao encontrado.\n", idEditar);
+                }
+                break;
+            }
+            
+            case 5: {
                 limparBuffer();
                 printf("\n--- EXCLUSAO DE LIVRO ---\n");
-                
-                do {
-                    printf("Digite o ID do livro que deseja apagar: ");
-                    fgets(entradaId, sizeof(entradaId), stdin);
-                    entradaId[strcspn(entradaId, "\n")] = '\0';
-                    
-                    if (strlen(entradaId) == 0) {
-                        printf("[ERRO] O ID nao pode ser vazio!\n");
-                    } else if (!idInt(entradaId)) {
-                        printf("[ERRO] ID invalido! Digite apenas numeros.\n");
-                    } else {
-                        idParaApagar = atoi(entradaId);
-                        if (idParaApagar <= 0) {
-                            printf("[ERRO] O ID nao pode ser negativo ou zero!\n");
-                            idParaApagar = -1;
+                printf("Como deseja encontrar o livro para apagar?\n");
+                printf("1. Digitar o ID direto\n");
+                printf("2. Buscar lista por Titulo\n");
+                printf("3. Buscar lista por Autor\n");
+                printf("4. Buscar lista por Genero\n");
+                printf("Escolha uma opcao: ");
+
+                int tipoBusca;
+                if (scanf("%d", &tipoBusca) != 1) {
+                    limparBuffer();
+                    tipoBusca = -1;
+                }
+
+                int idParaApagar = -1;
+
+                if (tipoBusca >= 2 && tipoBusca <= 4) {
+                    limparBuffer();
+                    char termo[100];
+                    printf("Digite o termo da busca: ");
+                    fgets(termo, sizeof(termo), stdin);
+                    termo[strcspn(termo, "\n")] = '\0';
+
+                    if (strlen(termo) > 0) {
+                        if (buscarLivroPorTermo(termo, tipoBusca - 1, nomeDoArquivo)) {
+                            printf("\nCom base na lista acima, ");
+                            idParaApagar = pedirIdValidado("digite o ID do livro que deseja apagar: ");
+                        } else {
+                            idParaApagar = -1; 
                         }
+                    } else {
+                        printf("\n[ERRO] O termo de busca nao pode ser vazio.\n");
                     }
-                } while (idParaApagar <= 0);
-                
-                excluirLivro(idParaApagar, nomeDoArquivo);
+                } 
+                else if (tipoBusca == 1) {
+                    limparBuffer();
+                    idParaApagar = pedirIdValidado("Digite o ID do livro que deseja apagar: ");
+                } 
+                else {
+                    printf("\n[ERRO] Opcao invalida!\n");
+                }
+
+                if (idParaApagar > 0) {
+                    if (buscarLivroPorId(idParaApagar, nomeDoArquivo)) {
+                        char confirmacao;
+                        printf("\nTem certeza absoluta que deseja EXCLUIR este livro? (s/n): ");
+                        scanf(" %c", &confirmacao);
+                        
+                        if (confirmacao == 's' || confirmacao == 'S') {
+                            excluirLivro(idParaApagar, nomeDoArquivo);
+                        } else {
+                            printf("-> Exclusao cancelada pelo usuario.\n");
+                        }
+                    } else {
+                        printf("\n[ERRO] Livro com ID %d nao encontrado.\n", idParaApagar);
+                    }
+                }
                 break;
             }
                 
             case 0:
-                printf("\nSaindo do sistema...\n");
+                printf("\nSaindo do sistema... Ate mais!\n");
                 break;
                 
             default:
-                printf("\nOpcao invalida! Tente novamente.\n");
+                printf("\n[ERRO] Opcao invalida! Tente novamente.\n");
         }
 
         if (opcao != 0) {
             printf("\nPressione ENTER para voltar ao menu...");
-            getchar();
+            if (opcao != 1 && opcao != 3 && opcao != 4) limparBuffer(); 
+            getchar(); 
         }
 
     } while (opcao != 0);
